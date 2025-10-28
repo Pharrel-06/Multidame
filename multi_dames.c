@@ -163,3 +163,80 @@ void jeu_ecrire(Jeu *jeu) {
         printf("\n");
     }
 }
+
+
+
+// Afffichage interface
+
+void affiche_score(Jeu *jeu){
+    switch (jeu.nb_joueurs){
+        case 2: // 2 joueurs
+            printf("Score:\n    J1  J2\n    %d  %d\n",
+                jeu.joueur[0].score,
+                jeu.joueur[1].score);
+            break;
+        case 3: // 3 joueurs
+            printf("Score:\n    J1  J2  J3\n    %d  %d  %d\n",
+                jeu.joueur[0].score,
+                jeu.joueur[1].score,
+                jeu.joueur[2].score);
+            break;
+        default:
+            printf("Score:\n    J1  J2  J3  J4\n    %d  %d  %d  %d\n",
+                jeu.joueur[0].score,
+                jeu.joueur[1].score,
+                jeu.joueur[2].score,
+                jeu.joueur[3].score);
+    }
+}
+
+void affiche_tour(Jeu *jeu){
+    printf("Tour: %d\n", jeu.tour);
+}
+
+void affiche_joueur_courant(Jeu *jeu){
+    printf("Joueur %d (%d)\n",jeu.joueur_courant ,jeu.joueur[joueur_courant].score);
+}
+
+// Choix unique au premier tour
+void affiche_anchoix(void){
+    printf("Entrer la position d'un pion blanc (sous la forme : ligne colonne)\n");
+}
+
+// choix global hors 1er jusqu'a la fin
+void affiche_choix(void){
+    printf("Entrer la position d'un pion de départ\n");
+}
+
+void affiche_arret(void){
+    printf("Arrêter ? (1 pour oui, 0 pour non)\n");
+}
+
+// Ne pas oublier la fonction des sauts possibles sinon, la mort
+void affiche_sauts_possibles(int taille, int possibilites[2][taille]){
+    printf("Sauts possibles: ");
+    printf("%d %d", possibilites[0][1] ,possibilites[0][1]);
+    for(int li = 1; li < taille; li++){
+        printf(", %d %d",possibilites[li][0] ,possibilites[li][1]);
+    }
+    printf(".\n");
+}
+
+void affiche_plateau(Jeu *jeu){
+    printf("   "); for(int i = 1; i <= TAILLE; i++){printf(" %d", i);} printf("\n");
+    
+    printf("   "); for(int i = 1; i <= TAILLE; i++){printf("%c", '_');printf("%c", '_');} printf("\n");
+    
+    for(int li = 0; li < TAILLE; li++){
+        printf("%d  |", li+1);
+        for(int col = 0; col < TAILLE; col++){
+            switch(jeu.plateau.pion[li][col]){
+                case 1: printf("+ "); break;
+                case 2: printf("o "); break;
+                case 3: printf("x "); break;
+                default:printf("  ");
+            }
+        }
+        printf("\n");
+    }
+}
