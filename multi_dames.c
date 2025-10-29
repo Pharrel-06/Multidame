@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
 // Initialisation des variable globales du programme
 #define TAILLE 8
@@ -36,6 +38,10 @@ int jeu_capturer(Jeu *jeu, int i, int j) {
     if (!(0 <= i && i < TAILLE) || !(0 <= j && j < TAILLE) || jeu->plateau.pion[i][j] == 0) {
         return 0;
     }
+    // Si c'est le premier tour, il faut que le pion à capturer soit blanc
+    if (jeu->tour == 0 && jeu->plateau.pion[i][j] != 1) {
+        return 0;
+    }
 
     // Ajout du score de la capture
     switch (jeu->plateau.pion[i][j])
@@ -69,7 +75,7 @@ int pos_saut_possible(Jeu *jeu, int pion_i, int pion_j, int indice_saut[][8]) {
     // Parcours des cases où l'on peut sauté
     for(int i = -2; i <= 2; i+=2) {
         for(int j = -2; j <= 2; j+=2) {
-            if (0 <= pion_i + i && pion_i + i <= 7 && 0 <= pion_j + j && pion_j + j <= 7) {
+            if (0 <= pion_i + i && pion_i + i < TAILLE && 0 <= pion_j + j && pion_j + j < TAILLE) {
                 // Si la case adjacente contient un pion et que la suivante est vide
                 if (jeu->plateau.pion[pion_i + i][pion_j + j] == 0 && jeu->plateau.pion[pion_i + (i/2)][pion_j + (j/2)] != 0) {
                     // On save les coordonnées de saut dans la liste
@@ -94,7 +100,7 @@ int jeu_saisir_pion(Jeu *jeu, int i, int j)  {
 
     // Vérifie si le pion peut faire au moins 1 saut
     int indice_saut[2][8];
-    if (pos_saut_possible(indice_saut, i, j, jeu) == 0) {
+    if (pos_saut_possible(jeu, i, j, indice_saut) == 0) {
         return 0;
     }
 
@@ -127,30 +133,9 @@ int jeu_sauter_vers(Jeu *jeu, int i, int j) {
     pion_capture_i = jeu->pion_i + ((i - jeu->pion_i) / 2);
     pion_capture_j = jeu->pion_j + ((j - jeu->pion_j) / 2);
 
-    // On vérifie que le saut s'effectue bien sur une case qui contient un pion
-    if (jeu->plateau.pion[pion_capture_i][pion_capture_j] == 0) {
+    if (!jeu_capturer(jeu, pion_capture_i, pion_capture_j)) {
         return 0;
     }
-
-    // Ajout du score de la capture
-    switch (jeu->plateau.pion[pion_capture_i][pion_capture_j])
-    {
-    // Pion blanc qui vaut 1
-    case 1:
-        jeu->joueur[jeu->joueur_courant].score += 1;
-        break;
-    // Pion rouge qui vaut 5
-    case 2:
-        jeu->joueur[jeu->joueur_courant].score += 5;
-        break;
-    // Pion noir qui vaut 8
-    case 3:
-        jeu->joueur[jeu->joueur_courant].score += 8;
-        break;
-    }
-
-    // Suppréssion du pion capturé
-    jeu->plateau.pion[pion_capture_i][pion_capture_j] = 0;
 
     // Déplacement du pion saisie
     jeu->plateau.pion[i][j] = jeu->plateau.pion[jeu->pion_i][jeu->pion_j];
@@ -248,7 +233,94 @@ void jeu_ecrire(Jeu *jeu) {
     }
 }
 
+// Vérifie qu'il y a au moins 1 pion qui peut faire un saut
+int aucun_saut_possible(Jeu *jeu) {
 
+    // Liste necessaire pour la fonction "pos_saut_possible"
+    int pos_saut[2][8];
+    // Parcours de tout les pion du plateau
+    for(int i = 0; i < TAILLE; i++) {
+        for(int j = 0; j < TAILLE; j++) {
+            // On regarde si il y a au moins 1 saut possible à partir du pion i j
+            if (pos_saut_possible(jeu, i, j, pos_saut)) {
+                // Il existe au moins un pion pouvant sauter
+                return 1;
+            }
+        }
+    }
+    // Aucun saut possible
+    return 0;
+}
+
+// Calcul et applique la pénalité au dernier joueur qui n'a pas pu faire de saut
+void penalite_fin_partie(Jeu *jeu) {
+    
+    for(int i = 0; i < TAILLE; i++) {
+        for(int j = 0; j < TAILLE; j++) {
+            // Déduction des points de la pénalité sur le score du joueur courant
+            switch (jeu->plateau.pion[i][j])
+            {
+            // Pion blanc qui vaut 1
+            case 1:
+                jeu->joueur[jeu->joueur_courant].score -= 1;
+                break;
+            // Pion rouge qui vaut 5
+            case 2:
+                jeu->joueur[jeu->joueur_courant].score -= 5;
+                break;
+            // Pion noir qui vaut 8
+            case 3:
+                jeu->joueur[jeu->joueur_courant].score -= 8;
+                break;
+            }
+        }
+    }
+}
+
+// Initialise le plateau de jeu
+void init_plateau(Jeu *jeu) {
+
+    srand(time(NULL));
+    // Tableau avec le nombre de pion blanc, rouge et noir à placer
+    int tab_couleur[3] = {34, 20, 10};
+    int nb_rand;
+
+    for(int i = 0; i < TAILLE; i++) {
+        for(int j = 0; j < TAILLE; j++) {
+            // Tirage du nombre aléatoire entre 0 et 3 (correspond au indice de tab_couleur avec 3 qui renvoie sur la case d'indice 0)
+            nb_rand = rand() % 4;
+            while (tab_couleur[nb_rand % 3] == 0) {
+                nb_rand = rand() % 4;
+            }
+            // On place le pion
+            jeu->plateau.pion[i][j] = (nb_rand % 3) + 1;
+            // On résuit le nombre de pion à poser
+            tab_couleur[nb_rand % 3] --;
+        }
+    }
+}
+
+// Initialise les données de la structure jeu
+void init_jeu(Jeu *jeu) {
+
+    int nb_joueur;
+
+    init_plateau(jeu);
+    // Peut être faire une fonction à part pour certain truc
+    printf("Entrez le nombre de joueur (entre 2 et 4) : ");
+    scanf("%d", &nb_joueur);
+    jeu->nb_joueurs = nb_joueur;
+    jeu->joueur_courant = 0;
+    jeu->pion_est_saisi = 0;
+    jeu->pion_i = 0;
+    jeu->pion_j = 0;
+    jeu->tour = 0;
+
+    for(int i = 0; i < nb_joueur; i++) {
+        jeu->joueur[i].etat = 1;
+        jeu->joueur[i].score = 0;
+    }
+}
 
 // Afffichage interface
 
@@ -323,4 +395,16 @@ void affiche_plateau(Jeu *jeu){
         }
         printf("\n");
     }
+}
+
+
+int main(void) {
+
+    Jeu jeu;
+    init_jeu(&jeu);
+    affiche_score(&jeu);
+    affiche_tour(&jeu);
+    affiche_joueur_courant(&jeu);
+    affiche_plateau(&jeu);
+    return 0;
 }
