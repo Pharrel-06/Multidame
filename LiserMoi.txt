@@ -1,0 +1,31 @@
+##################################################### ReadMe multi_dames.c #####################################################
+
+Groupe de TP : TP5
+
+Développeurs :
+    - ABRIAL Tom 
+    - FLEURANVIL Pharrel 
+
+Pour compiler le programme :
+    - Ouvrir un terminale
+    - Entrer la commande : gcc -std=c17 -Wall multi_dames.c -o multi_dames 
+                           OU 
+                           clang -std=c17 -Wall multi_dames.c -o multi_dames 
+    
+Pour lancer le programme :
+    - Compiler avec la commande au dessus
+    - Entrer la commande : .\multi_dames
+
+Remarque pour l'utilisateur :
+    - Suivre le format des entrée qui est indiqué (entier entrer 1 et 8 pour les lignes et colonnes, 0 er 1 pour oui et non)
+    - Si vous essayer de mettre autre chose que le format indiqué, il y aura des erreurs
+    - Si vous entrer plus de valeurs que demandé, elles seront utilisé pour la prochaine requête de valeurs. (ex : Si en allant vite vous mettez plusieur valeurs pour la question "Arrêter ?", les autres seront utilisé dans la requête suivante)
+
+Les difficultés rencontré lors du développement :
+    - Le respect du comportement des fonctions obligatoire : En utilisant Platon on a pû les corriger
+    - L'utilisation de structures imbriqué les unes dasn les autres : Avec quelques test ça allait
+    - Une "segmentation fault" à cause d'un problème dans la lecture du tableau à deux dimension : Après vérification des indices ça allait
+    - La gestion des saisies de l'utilisateur quad il a des erreurs de frappe : En faisant plus attention lors de la saisie c'était bon
+    - La confusion entre les coordonnées de l'interface et celle du tableau en lui même : En faisant plus attention c'était bon
+    - L'assemblage de toutes les fonctions : Avec de la patience on à réussi
+    
