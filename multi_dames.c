@@ -1,3 +1,6 @@
+///////////////////////////////////////////////////////// Multi Dame /////////////////////////////////////////////////////////
+
+// Import des bibliothèques
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -93,6 +96,11 @@ int pos_saut_possible(Jeu *jeu, int pion_i, int pion_j, int indice_saut[][8]) {
 // Utilisée en début de tour pour saisir le pion permettant de faire des saut (par le joueur courant)
 int jeu_saisir_pion(Jeu *jeu, int i, int j)  {
 
+    // On vérifie si la case sélectionné est valide
+    if (!(0 <= i && i < TAILLE) || !(0 <= j && j < TAILLE) || jeu->plateau.pion[i][j] == 0) {
+        return 0;
+    }
+
     // Vérifie si la case contient un pion
     if (jeu->plateau.pion[i][j] == 0) {
         return 0;
@@ -133,6 +141,7 @@ int jeu_sauter_vers(Jeu *jeu, int i, int j) {
     pion_capture_i = jeu->pion_i + ((i - jeu->pion_i) / 2);
     pion_capture_j = jeu->pion_j + ((j - jeu->pion_j) / 2);
 
+    // On vérifie si il y a bien un pion à capturer, si oui on le capture
     if (!jeu_capturer(jeu, pion_capture_i, pion_capture_j)) {
         return 0;
     }
@@ -241,6 +250,10 @@ int aucun_saut_possible(Jeu *jeu) {
     // Parcours de tout les pion du plateau
     for(int i = 0; i < TAILLE; i++) {
         for(int j = 0; j < TAILLE; j++) {
+            // On vérifie que la case contient bien un pion :(
+            if (jeu->plateau.pion[i][j] == 0){
+                continue;
+            }
             // On regarde si il y a au moins 1 saut possible à partir du pion i j
             if (pos_saut_possible(jeu, i, j, pos_saut)) {
                 // Il existe au moins un pion pouvant sauter
@@ -255,6 +268,7 @@ int aucun_saut_possible(Jeu *jeu) {
 // Calcul et applique la pénalité au dernier joueur qui n'a pas pu faire de saut
 void penalite_fin_partie(Jeu *jeu) {
     
+    // Parcour du plateau
     for(int i = 0; i < TAILLE; i++) {
         for(int j = 0; j < TAILLE; j++) {
             // Déduction des points de la pénalité sur le score du joueur courant
@@ -304,11 +318,12 @@ void init_plateau(Jeu *jeu) {
 void init_jeu(Jeu *jeu) {
 
     int nb_joueur;
-
-    init_plateau(jeu);
-    // Peut être faire une fonction à part pour certain truc
+    
     printf("Entrez le nombre de joueur (entre 2 et 4) : ");
     scanf("%d", &nb_joueur);
+
+    init_plateau(jeu);
+
     jeu->nb_joueurs = nb_joueur;
     jeu->joueur_courant = 0;
     jeu->pion_est_saisi = 0;
@@ -324,21 +339,22 @@ void init_jeu(Jeu *jeu) {
 
 // Afffichage interface
 
+// Affiche le score de tout les joueurs
 void affiche_score(Jeu *jeu){
     switch (jeu->nb_joueurs){
         case 2: // 2 joueurs
-            printf("Score:\n    J1  J2\n    %d  %d\n",
+            printf("Score:\n    J1  J2\n    %d   %d\n",
                 jeu->joueur[0].score,
                 jeu->joueur[1].score);
             break;
         case 3: // 3 joueurs
-            printf("Score:\n    J1  J2  J3\n    %d  %d  %d\n",
+            printf("Score:\n    J1  J2  J3\n    %d   %d   %d\n",
                 jeu->joueur[0].score,
                 jeu->joueur[1].score,
                 jeu->joueur[2].score);
             break;
         default:
-            printf("Score:\n    J1  J2  J3  J4\n    %d  %d  %d  %d\n",
+            printf("Score:\n    J1  J2  J3  J4\n    %d   %d   %d   %d\n",
                 jeu->joueur[0].score,
                 jeu->joueur[1].score,
                 jeu->joueur[2].score,
@@ -346,65 +362,244 @@ void affiche_score(Jeu *jeu){
     }
 }
 
+// Affiche le nombre de tour
 void affiche_tour(Jeu *jeu){
-    printf("Tour: %d\n", jeu->tour);
+    printf("Tour: %d\n", jeu->tour + 1);
 }
 
+// Affiche le numéro du joueur courant
 void affiche_joueur_courant(Jeu *jeu){
-    printf("Joueur %d (%d)\n",jeu->joueur_courant ,jeu->joueur[jeu->joueur_courant].score);
+    printf("Joueur %d (%d)\n",jeu->joueur_courant + 1,jeu->joueur[jeu->joueur_courant].score);
 }
 
-// Choix unique au premier tour
+// Affiche un texte pour la capture d'un pion blanc (pour le premier tour)
 void affiche_anchoix(void){
     printf("Entrer la position d'un pion blanc (sous la forme : ligne colonne)\n");
 }
 
-// choix global hors 1er jusqu'a la fin
+// Affiche un texte pour saisir un pion
 void affiche_choix(void){
-    printf("Entrer la position d'un pion de départ\n");
+    printf("Entrer la position d'un pion de départ (sous la forme : ligne colonne)\n");
 }
 
+// Affiche un texte pour demander l'arrêt du joueur
 void affiche_arret(void){
     printf("Arrêter ? (1 pour oui, 0 pour non)\n");
 }
 
-// Ne pas oublier la fonction des sauts possibles sinon, la mort
-void affiche_sauts_possibles(int taille, int possibilites[2][taille]){
-    printf("Sauts possibles: ");
-    printf("%d %d", possibilites[0][1] ,possibilites[0][1]);
-    for(int li = 1; li < taille; li++){
-        printf(", %d %d",possibilites[li][0] ,possibilites[li][1]);
+// Affiche les coordonnées des cases disponible pour un saut 
+void affiche_sauts_possibles(int taille, int possibilites[2][8]){
+    if (taille > 0) {
+        printf("Sauts possibles: ");
+        printf("%d %d", possibilites[0][0] + 1, possibilites[1][0] + 1);
+        for(int i = 1; i < taille; i++){
+            printf(", %d %d", possibilites[0][i] + 1, possibilites[1][i] + 1);
+        }
+        printf(".\n");
     }
-    printf(".\n");
 }
 
+// Affiche le plateau de jeu
 void affiche_plateau(Jeu *jeu){
-    printf("   "); for(int i = 1; i <= TAILLE; i++){printf(" %d", i);} printf("\n");
     
-    printf("   "); for(int i = 1; i <= TAILLE; i++){printf("%c", '_');printf("%c", '_');} printf("\n");
-    
+    // Affichage des numéros de colonnes
+    printf("   "); for(int i = 1; i <= TAILLE; i++){ printf(" %2d", i); } printf("\n");
+    // Affichage d'une ligne de sépration 
+    printf("   "); for(int i = 1; i <= TAILLE; i++){ printf("___"); } printf("\n");
+
+    // Affichage ligne par ligne
     for(int li = 0; li < TAILLE; li++){
-        printf("%d  |", li+1);
+        // Affichage des numéros de lignes
+        printf("%2d |", li+1);
         for(int col = 0; col < TAILLE; col++){
-            switch(jeu->plateau.pion[li][col]){
-                case 1: printf("+ "); break;
-                case 2: printf("o "); break;
-                case 3: printf("x "); break;
-                default:printf("  ");
+            // Si un pion est saisi et que c'est la case sélectionnée, on entoure par des crochets
+            if (jeu->pion_est_saisi && li == jeu->pion_i && col == jeu->pion_j) {
+                switch(jeu->plateau.pion[li][col]){
+                    case 1: printf("[+]"); break;
+                    case 2: printf("[o]"); break;
+                    case 3: printf("[x]"); break;
+                    default:printf("[ ]");
+                }
+            } else {
+                switch(jeu->plateau.pion[li][col]){
+                    case 1: printf(" + "); break;
+                    case 2: printf(" o "); break;
+                    case 3: printf(" x "); break;
+                    default:printf("   ");
+                }
             }
         }
         printf("\n");
     }
 }
 
+// Affiche les score de la partie, le nombre de tour, le joueur actuel et le plateau
+void affiche_global(Jeu *jeu){
+    affiche_score(jeu);
+    affiche_tour(jeu);
+    affiche_joueur_courant(jeu);
+    affiche_plateau(jeu);
+}
 
-int main(void) {
+// Initialise le plateau de jeu et affiche les données de la partie
+void initialise_jeu_base(Jeu *jeu){
+    init_jeu(jeu);
+    affiche_global(jeu);
+}
 
+// Représente la première partie du jeu dans laquelle chaque joueur doit capturer un pion blanc
+void choix_premier_tour(Jeu *jeu){
+
+    // Parcours des joueurs
+    for(int i = 0; i < jeu->nb_joueurs; i++){
+        // Réccupération du choix de l'utilisateur
+        int choix_i, choix_j;
+        affiche_anchoix();
+        scanf("%d %d", &choix_i, &choix_j);
+        // Vérification selon les règles
+        while(!(jeu_capturer(jeu, choix_i - 1, choix_j - 1))){
+            printf("Pion invalide, veuillez choisir un pion blanc.\n");
+            affiche_anchoix();
+            scanf("%d %d", &choix_i, &choix_j);
+        }
+        jeu_joueur_suivant(jeu);
+        affiche_global(jeu);
+    }
+}
+
+// Vérifie si la case de saut est bien compris dans la liste
+int saut_in_liste(int i, int j, int liste[][8], int taille){
+    for(int n = 0; n < taille; n++){
+        if(liste[0][n] == i && liste[1][n] == j){
+            return 1;
+        }
+    }
+    return 0;
+}
+
+// Demande si l'utilisateur veut s'arrêter et vérifie si il peut le faire
+int choix_arret_joueur(Jeu *jeu){
+
+    // Réccupération du choix de l'utilisateur
+    int arret;
+    affiche_arret(); scanf("%d", &arret);
+
+    // Si il veut s'arrêter :
+    if (arret == 1){
+        // On regarde si il peut s'arrêter
+        if (jeu_arreter(jeu) == 1){
+            printf("\nLe joueur %d s'arrete.\n\n", jeu->joueur_courant + 1);
+            jeu_joueur_suivant(jeu);
+            return 1;
+        }else{
+            printf("Vous etes le dernier joueur, continuer jusqu'a ne plus pouvoir capturer de pions.\n");
+            return 0;
+        }
+    }
+    return 0;
+}
+
+// Saisie le pion choisie par l'utilisateur
+void choix_saisir_pion(Jeu *jeu){
+    
+    // Réccupération du choix de l'utilisateur
+    int choix_i, choix_j;
+    do{
+        affiche_choix(); 
+        scanf("%d %d",&choix_i, &choix_j);
+        // On fait -1 pour passé des lignes de l'affichage aux lignes du tableau
+        choix_i --; choix_j --;
+    // Vérification de la saisie du pion
+    }while(jeu_saisir_pion(jeu, choix_i, choix_j) == 0);
+}
+
+// Affiche et sélectionne les sauts du pion saisie par le joueur
+void choix_saut(Jeu *jeu){
+
+    // Tableau 2 dimensions qui contient les coordonnées des où le pion peut sauter
+    int possibilites[2][8];
+    int nb_sauts_possibles;
+
+    // Tant que le pion saisie peut effecter des sauts, on réccupère les coordonnées des cases valides et leurs nombre
+    while ((nb_sauts_possibles = pos_saut_possible(jeu, jeu->pion_i, jeu->pion_j, possibilites)) != 0) {
+        // On affiche les cases disponibles pour le saut
+        int choix_saut_i, choix_saut_j;
+        affiche_sauts_possibles(nb_sauts_possibles, possibilites);
+        // On réccupère la case sélectionné
+        scanf("%d %d", &choix_saut_i, &choix_saut_j);
+        // On fait -1 pour passé des lignes de l'affichage aux lignes du tableau
+        choix_saut_i --; choix_saut_j --;
+
+        // Si la case correspond à celle disponible, on fait le saut
+        if (saut_in_liste(choix_saut_i, choix_saut_j, possibilites, nb_sauts_possibles) == 1){
+            jeu_sauter_vers(jeu, choix_saut_i, choix_saut_j);
+            affiche_plateau(jeu);
+        } else {
+            printf("Choix invalide.\n");
+        }
+    }
+}
+
+// Représente les tours de la partie (sauf le premier) avec la demande d'arrêt, la saisie d'un pion et les sauts pour chaque joueur
+void choix_tour(Jeu *jeu){
+
+    // Tant qu'il y a au moins 1 pion sur le plateau qui peut faire un saut valide, on continue la partie
+    while(aucun_saut_possible(jeu)){
+        // Affiche des données de la partie
+        affiche_global(jeu);
+
+        // Si le joueur souhaite arrêter, on ne fais pas de saisie de pion et on met à jour son état
+        if (choix_arret_joueur(jeu)){
+            continue;
+        }
+        
+        // Saisie d'un pion par l'utilisateur
+        choix_saisir_pion(jeu);
+
+        // Affichage du plateau
+        affiche_plateau(jeu);
+
+        // On effectue les sauts possible avec le pion saisie
+        choix_saut(jeu);
+
+        // On passe au joueur suivant
+        printf("Fin du tour du Joueur %d.\n",jeu->joueur_courant + 1);
+        jeu_joueur_suivant(jeu);
+    }
+}
+
+// Renvoie le gagnant de la partie 
+int gagnant(Jeu *jeu){
+
+    int gagnant = 0;
+    for(int i = 1; i < jeu->nb_joueurs; i++){
+        if (jeu->joueur[gagnant].score < jeu->joueur[i].score){gagnant = i;}
+    }
+    return gagnant;
+}
+
+// Fonction principale qui compose l'entièreté du jeu "Multi Dame"
+void multi_dame(void){
+
+    // Initialisation de la structure et des données de la partie
     Jeu jeu;
-    init_jeu(&jeu);
+    initialise_jeu_base(&jeu);
+    // Capture d'un pion blanc au premier tour
+    choix_premier_tour(&jeu);
+    // Déroulement de la partie sur tout les autres tours
+    choix_tour(&jeu);
+
+    // Annonce des résultats de la partie
+    printf("Plus de sauts possibles sur le plateau. Fin de la partie\n");
+    printf("Penalité appliquer a Joueur %d", jeu.joueur_courant + 1);
+    penalite_fin_partie(&jeu);
+    printf("\n\n"); 
     affiche_score(&jeu);
-    affiche_tour(&jeu);
-    affiche_joueur_courant(&jeu);
-    affiche_plateau(&jeu);
+    printf("\nLe gagnant est... Le joueur %d!!!!\n", gagnant(&jeu) + 1);
+}
+
+// Main du programme C
+int main(void) {
+    multi_dame();
     return 0;
 }
