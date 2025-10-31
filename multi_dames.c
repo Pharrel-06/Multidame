@@ -41,6 +41,9 @@ int jeu_capturer(Jeu *jeu, int i, int j) {
     if (!(0 <= i && i < TAILLE) || !(0 <= j && j < TAILLE) || jeu->plateau.pion[i][j] == 0) {
         return 0;
     }
+    if (jeu->plateau.pion[i][j] == 0) {
+        return 0;
+    }
     // Si c'est le premier tour, il faut que le pion à capturer soit blanc
     if (jeu->tour == 0 && jeu->plateau.pion[i][j] != 1) {
         return 0;
@@ -129,10 +132,15 @@ int jeu_sauter_vers(Jeu *jeu, int i, int j) {
         return 0;
     }
     // On vérifie si la case sélectionné pour le saut est bien une case adjacente
-    if (!(-2 <= (i - jeu->pion_i) && (i - jeu->pion_i) <= 2 && -2 <= (j - jeu->pion_j) && (j - jeu->pion_j) <= 2)) {
-        return 0;
+    // Liste avec les vecteurs de déplacement valide du pion saisir vers une case pour un saut
+    int lst_adjacente_vide[2][8] = {{-2, -2, 0, 2, 2, 2, 0, -2},{0, 2, 2, 2, 0, -2, -2, -2}};
+    int case_in_lst = 0;
+    for(int n = 0; n < 8; n++) {
+        if ((jeu->pion_i + lst_adjacente_vide[0][n]) == i && (jeu->pion_j + lst_adjacente_vide[1][n]) == j) {
+            case_in_lst = 1;
+        }
     }
-    if (((i - jeu->pion_i) + (j - jeu->pion_j)) % 2 != 0) {
+    if (case_in_lst == 0) {
         return 0;
     }
 
